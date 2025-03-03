@@ -45,13 +45,13 @@ func (user *User) Online() {
 
 // 用户下线功能
 func (user *User) Offline() {
-	// 用户下线，将用户从OnlineMap中删除
+	// 广播当前用户下线信息
+	user.server.BroadCast(user, "is offline")
+	// 将用户从OnlineMap中删除
 	user.server.mapLock.Lock()
 	delete(user.server.OnlineMap, user.Name)
 	user.server.mapLock.Unlock()
 
-	// 广播当前用户上线信息
-	user.server.BroadCast(user, "is offline")
 }
 
 // 用户处理消息的业务
@@ -89,9 +89,15 @@ func (user *User) DoMessage(msg string) {
 
 // 监听当前User channel的方法，一旦有消息就直接发送给对端客户端
 func (user *User) ListenMessage() {
-	for {
-		msg := <-user.C
-		user.conn.Write([]byte(msg + "\n"))
+	for msg := range user.C {
+		_, err := user.conn.Write([]byte(msg + "\n"))
+		if err != nil {
+			panic(err)
+		}
+	}
+	err := user.conn.Close()
+	if err != nil {
+		panic(err)
 	}
 }
 

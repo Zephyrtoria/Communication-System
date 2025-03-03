@@ -48,6 +48,7 @@ func (s *Server) Handler(conn net.Conn) {
 			n, err := conn.Read(buf)
 			if n == 0 {
 				user.Offline()
+				// return退出当前线程，而不退出Handler
 				return
 			}
 			if err != nil && err != io.EOF {
@@ -74,14 +75,8 @@ func (s *Server) Handler(conn net.Conn) {
 			// 一但进入该case就说明超时了，After本质是一个channel，当超时时会向管道写入标记
 			// 超时时将当前User强制关闭
 			user.SendMsg("You have been quit.")
-			// 销毁资源
-			/*			s.mapLock.Lock()
-						delete(s.OnlineMap, user.Name)
-						s.mapLock.Unlock()*/
+			// 销毁资源，只关闭user.C
 			close(user.C)
-			// 关闭连接
-			conn.Close()
-			// 退出当前的Handler
 			return // 或使用runtime.Goexit()
 		}
 	}
