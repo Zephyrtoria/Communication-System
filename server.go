@@ -70,7 +70,7 @@ func (s *Server) Handler(conn net.Conn) {
 	// 超时处理，定时器
 	for {
 		select {
-		case <-time.After(time.Second * 10):
+		case <-time.After(time.Second * 60):
 			// 一但进入该case就说明超时了，After本质是一个channel，当超时时会向管道写入标记
 			// 超时时将当前User强制关闭
 			user.SendMsg("You have been quit.")
@@ -91,7 +91,7 @@ func (s *Server) Handler(conn net.Conn) {
 
 // 广播信息的方法
 func (s *Server) BroadCast(user *User, msg string) {
-	sendMsg := "[" + user.Addr + "]" + user.Name + ":" + msg
+	sendMsg := "[" + user.Addr + "]" + user.Name + ":" + msg + "\n"
 	s.Message <- sendMsg
 }
 
