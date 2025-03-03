@@ -61,7 +61,7 @@ func (user *User) DoMessage(msg string) {
 		// 查询当前在线用户
 		user.server.mapLock.Lock()
 		for _, each := range user.server.OnlineMap {
-			onlineMsg := "[" + each.Addr + "]" + each.Name + ":" + "is currently online"
+			onlineMsg := "[" + each.Addr + "]" + each.Name + ":" + "is currently online\n"
 			// 给指定用户发送消息
 			user.conn.Write([]byte(onlineMsg))
 		}
@@ -72,7 +72,7 @@ func (user *User) DoMessage(msg string) {
 		// 判断name是否存在
 		_, ok := user.server.OnlineMap[newName]
 		if ok {
-			user.SendMsg("This username is used.")
+			user.SendMsg("This username is used.\n")
 		} else {
 			user.server.mapLock.Lock()
 			// 删除当前名字
@@ -80,25 +80,25 @@ func (user *User) DoMessage(msg string) {
 			user.server.OnlineMap[newName] = user
 			user.server.mapLock.Unlock()
 			user.Name = newName
-			user.SendMsg("User name update:" + newName)
+			user.SendMsg("User name update:" + newName + "\n")
 		}
 	} else if len(msg) > 4 && msg[:3] == "to|" {
 		// 私聊
 		stringArray := strings.Split(msg, "|")
 		if len(stringArray) != 3 {
-			user.SendMsg("Message format incorrect")
+			user.SendMsg("Message format incorrect\n")
 			return
 		}
 		// 获取对方用户名
 		remoteName := stringArray[1]
 		if remoteName == "" {
-			user.SendMsg("Message format incorrect")
+			user.SendMsg("Message format incorrect\n")
 			return
 		}
 		// 根据用户名得到user对象
 		remoteUser, ok := user.server.OnlineMap[remoteName]
 		if !ok {
-			user.SendMsg("This username is not exist")
+			user.SendMsg("This username is not exist\n")
 		}
 		// 获取消息内容，通过user.sendMsg来发送
 		content := stringArray[2]
