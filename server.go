@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"net"
 	"sync"
 )
@@ -32,16 +33,33 @@ func NewServer(ip string, port int) *Server {
 // 当前链接的业务
 func (s *Server) Handler(conn net.Conn) {
 	fmt.Println("链接建立成功")
-	// 用户上线，将用户加入到OnlineMap中
-	user := NewUser(conn)
-	s.mapLock.Lock()
-	s.OnlineMap[user.Name] = user
-	s.mapLock.Unlock()
-
-	// 广播当前用户上线信息
-	s.BroadCast(user, "已上线")
+	// 用户上线
+	user := NewUser(conn, s)
+	// 封装功能
+	user.Online()
 
 	// 当前handler阻塞
+	go func() {
+		buf := make([]byte, 4096)
+		for {
+			n, err := conn.Read(buf)
+			if n == 0 {
+				user.Offline()
+				return
+			}
+
+			if err != nil && err != io.EOF {
+				fmt.Println("Conn Read err:", err)
+				return
+			}
+
+			// 获取用户的信息
+			msg := string(buf[:n-1])
+
+			// 用户针对msg进行消息处理
+			user.DoMessage(msg)
+		}
+	}()
 }
 
 // 广播信息的方法
