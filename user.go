@@ -53,8 +53,19 @@ func (user *User) Offline() {
 
 // 用户处理消息的业务
 func (user *User) DoMessage(msg string) {
-	// 可以有其他的处理操作，这里恰好只有调用广播接口的功能
-	user.server.BroadCast(user, msg)
+	// 查询指令
+	if msg == "who" {
+		// 查询当前在线用户
+		user.server.mapLock.Lock()
+		for _, each := range user.server.OnlineMap {
+			onlineMsg := "[" + each.Addr + "]" + each.Name + ":" + "当前在线\n"
+			// 给指定用户发送消息
+			user.conn.Write([]byte(onlineMsg))
+		}
+		user.server.mapLock.Unlock()
+	} else {
+		user.server.BroadCast(user, msg)
+	}
 }
 
 // 监听当前User channel的方法，一旦有消息就直接发送给对端客户端
