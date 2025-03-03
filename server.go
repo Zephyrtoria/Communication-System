@@ -32,7 +32,7 @@ func NewServer(ip string, port int) *Server {
 
 // 当前链接的业务
 func (s *Server) Handler(conn net.Conn) {
-	fmt.Println("链接建立成功")
+	fmt.Println("Links build successfully")
 	// 用户上线
 	user := NewUser(conn, s)
 	// 封装功能
