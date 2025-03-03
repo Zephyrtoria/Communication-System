@@ -50,7 +50,6 @@ func (s *Server) Handler(conn net.Conn) {
 				user.Offline()
 				return
 			}
-
 			if err != nil && err != io.EOF {
 				fmt.Println("Conn Read err:", err)
 				return
@@ -58,7 +57,6 @@ func (s *Server) Handler(conn net.Conn) {
 
 			// 获取用户的信息
 			msg := string(buf[:n-1])
-
 			// 用户针对msg进行消息处理
 			user.DoMessage(msg)
 
@@ -70,21 +68,21 @@ func (s *Server) Handler(conn net.Conn) {
 	// 超时处理，定时器
 	for {
 		select {
+		case <-isLive:
+			// 只要能从isLive中获取数据，则说明用户在活跃，重启定时器
 		case <-time.After(time.Second * 10):
 			// 一但进入该case就说明超时了，After本质是一个channel，当超时时会向管道写入标记
 			// 超时时将当前User强制关闭
 			user.SendMsg("You have been quit.")
 			// 销毁资源
-			s.mapLock.Lock()
-			delete(s.OnlineMap, user.Name)
-			s.mapLock.Unlock()
+			/*			s.mapLock.Lock()
+						delete(s.OnlineMap, user.Name)
+						s.mapLock.Unlock()*/
 			close(user.C)
 			// 关闭连接
 			conn.Close()
 			// 退出当前的Handler
-			return // Hu哦使用runtime.Goexit()
-		case <-isLive:
-			// 只要能从isLive中获取数据，则说明用户在活跃，重启定时器
+			return // 或使用runtime.Goexit()
 		}
 	}
 }
