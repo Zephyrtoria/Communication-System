@@ -105,7 +105,7 @@ func (user *User) DoMessage(msg string) {
 		if content == "" {
 			user.SendMsg("Send without content\n")
 		}
-		remoteUser.SendMsg(user.Name + "talk to you:" + content)
+		remoteUser.SendMsg(user.Name + " talk to you: " + content)
 	} else {
 		user.server.BroadCast(user, msg)
 	}
