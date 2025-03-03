@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 	"sync"
+	"time"
 )
 
 type Server struct {
@@ -37,6 +38,8 @@ func (s *Server) Handler(conn net.Conn) {
 	user := NewUser(conn, s)
 	// 封装功能
 	user.Online()
+	// 监听用户是否活跃的channel
+	isLive := make(chan bool)
 
 	// 当前handler阻塞
 	go func() {
@@ -58,8 +61,32 @@ func (s *Server) Handler(conn net.Conn) {
 
 			// 用户针对msg进行消息处理
 			user.DoMessage(msg)
+
+			// 用户的任意消息，代表当前用户是一个活跃的
+			isLive <- true
 		}
 	}()
+
+	// 超时处理，定时器
+	for {
+		select {
+		case <-time.After(time.Second * 10):
+			// 一但进入该case就说明超时了，After本质是一个channel，当超时时会向管道写入标记
+			// 超时时将当前User强制关闭
+			user.SendMsg("You have been quit.")
+			// 销毁资源
+			s.mapLock.Lock()
+			delete(s.OnlineMap, user.Name)
+			s.mapLock.Unlock()
+			close(user.C)
+			// 关闭连接
+			conn.Close()
+			// 退出当前的Handler
+			return // Hu哦使用runtime.Goexit()
+		case <-isLive:
+			// 只要能从isLive中获取数据，则说明用户在活跃，重启定时器
+		}
+	}
 }
 
 // 广播信息的方法
